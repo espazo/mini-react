@@ -1,10 +1,25 @@
+const textEl = {
+    type: "TEXT_ELEMENT",
+    props: {
+        nodeValue: "app",
+        children: [],
+    },
+};
 
-const dom = document.createElement("div");
-dom.id = "app";
+const el = {
+    type: "div",
+    props: {
+        id: "app",
+        children: [textEl],
+    },
+};
+
+const dom = document.createElement(el.type);
+dom.id = el.props.id;
 
 document.querySelector("#root").appendChild(dom);
 
 const textNode = document.createTextNode("");
-textNode.nodeValue = "app";
+textNode.nodeValue = textEl.props.nodeValue ;
 
 dom.appendChild(textNode);
