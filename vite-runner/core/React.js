@@ -29,8 +29,10 @@ function render(el, container) {
             children: [el],
         },
     };
+    root = nextWorkOfUnit;
 }
 
+let root = null;
 let nextWorkOfUnit = null;
 
 function workLoop(deadline) {
@@ -40,7 +42,25 @@ function workLoop(deadline) {
         shouldYield = deadline.timeRemaining() < 1;
     }
 
-    requestIdleCallback(workLoop);
+    if (nextWorkOfUnit == null) {
+        commitUI();
+    } else {
+        requestIdleCallback(workLoop);
+    }
+}
+
+function commitUI() {
+    function recursion(task) {
+        if (task == null) {
+            return;
+        }
+
+        task.parent.dom.append(task.dom);
+        recursion(task.child);
+        recursion(task.sibling);
+    }
+
+    recursion(root.child);
 }
 
 function createDom(type) {
@@ -82,7 +102,7 @@ function performWorkOfUnit(fiber) {
     if (!fiber.dom) {
         const dom = fiber.dom = createDom(fiber.type);
 
-        fiber.parent.dom.append(dom);
+        // fiber.parent.dom.append(dom);
 
         updateProps(dom, fiber.props);
     }
