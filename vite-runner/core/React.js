@@ -14,7 +14,8 @@ function createElement(type, props, ...children) {
         props: {
             ...props,
             children: children.map((child) => {
-                return typeof child === "string"
+                const isTextNode = typeof child === "string" || typeof child === "number";
+                return isTextNode
                     ? createTextNode(child)
                     : child;
             }),
@@ -55,7 +56,14 @@ function commitUI() {
             return;
         }
 
-        task.parent.dom.append(task.dom);
+        let taskParent = task.parent;
+        while (!taskParent.dom) {
+            taskParent = taskParent.parent;
+        }
+
+        if (task.dom) {
+            taskParent.dom.append(task.dom);
+        }
         recursion(task.child);
         recursion(task.sibling);
     }
@@ -77,8 +85,7 @@ function updateProps(dom, props) {
     });
 }
 
-function initChildren(fiber) {
-    const children = fiber.props.children;
+function initChildren(fiber, children) {
     let prevChild = null;
     children.forEach((child, index) => {
         const newFiber = {
@@ -99,7 +106,9 @@ function initChildren(fiber) {
 }
 
 function performWorkOfUnit(fiber) {
-    if (!fiber.dom) {
+    const isFunctionComponent = typeof fiber.type === "function";
+
+    if (!fiber.dom && !isFunctionComponent) {
         const dom = fiber.dom = createDom(fiber.type);
 
         // fiber.parent.dom.append(dom);
@@ -107,17 +116,20 @@ function performWorkOfUnit(fiber) {
         updateProps(dom, fiber.props);
     }
 
-    initChildren(fiber);
+    const children = isFunctionComponent ? [fiber.type(fiber.props)] : fiber.props.children;
+    initChildren(fiber, children);
 
     if (fiber.child) {
         return fiber.child;
     }
 
-    if (fiber.sibling) {
-        return fiber.sibling;
+    let nextFiber = fiber;
+    while (nextFiber) {
+         if (nextFiber.sibling) {
+             return nextFiber.sibling;
+         }
+         nextFiber = nextFiber.parent;
     }
-
-    return fiber.parent?.sibling;
 }
 
 requestIdleCallback(workLoop);
