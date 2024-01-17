@@ -24,17 +24,17 @@ function createElement(type, props, ...children) {
 }
 
 function render(el, container) {
-    nextWorkOfUnit = {
+    wipRoot = {
         dom: container,
         props: {
             children: [el],
         },
     };
-    root = nextWorkOfUnit;
-    root.alternate = root;
+    nextWorkOfUnit = wipRoot;
+    wipRoot.alternate = wipRoot;
 }
 
-let root = null;
+let wipRoot = null;
 let nextWorkOfUnit = null;
 
 function workLoop(deadline) {
@@ -73,7 +73,7 @@ function commitUI() {
         recursion(task.sibling);
     }
 
-    recursion(root.child);
+    recursion(wipRoot.child);
 }
 
 function createDom(type) {
@@ -106,7 +106,7 @@ function updateProps(dom, nextProps, prevProps) {
     });
 }
 
-function initChildren(fiber, children) {
+function reconcileChildren(fiber, children) {
     let oldFiber = fiber.alternate?.child;
     let prevChild = null;
     children.forEach((child, index) => {
@@ -150,7 +150,7 @@ function initChildren(fiber, children) {
 
 function updateFunctionComponent(fiber) {
     const children = [fiber.type(fiber.props)];
-    initChildren(fiber, children);
+    reconcileChildren(fiber, children);
 }
 
 function updateHostComponent(fiber) {
@@ -163,7 +163,7 @@ function updateHostComponent(fiber) {
     }
 
     const children = fiber.props.children;
-    initChildren(fiber, children);
+    reconcileChildren(fiber, children);
 }
 
 function performWorkOfUnit(fiber) {
@@ -191,7 +191,7 @@ function performWorkOfUnit(fiber) {
 requestIdleCallback(workLoop);
 
 function update() {
-    nextWorkOfUnit = root;
+    nextWorkOfUnit = wipRoot;
     requestIdleCallback(workLoop);
 }
 
