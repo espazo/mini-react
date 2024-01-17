@@ -31,6 +31,7 @@ function render(el, container) {
         },
     };
     root = nextWorkOfUnit;
+    root.alternate = root;
 }
 
 let root = null;
@@ -61,8 +62,12 @@ function commitUI() {
             taskParent = taskParent.parent;
         }
 
-        if (task.dom) {
-            taskParent.dom.append(task.dom);
+        if (task.effectTag === "update") {
+            updateProps(task.dom, task.props, task.alternate?.props);
+        } else if (task.effectTag === "placement") {
+            if (task.dom) {
+                taskParent.dom.append(task.dom);
+            }
         }
         recursion(task.child);
         recursion(task.sibling);
@@ -77,31 +82,63 @@ function createDom(type) {
         : document.createElement(type);
 }
 
-function updateProps(dom, props) {
-    Object.keys(props).forEach((key) => {
+function updateProps(dom, nextProps, prevProps) {
+    Object.keys(prevProps).forEach((key) => {
         if (key !== "children") {
-            if (key.startsWith("on")) {
-                const eventType = key.slice(2).toLowerCase();
-                dom.addEventListener(eventType, props[key]);
-            } else {
-
+            if (!(key in nextProps)) {
+                dom.removeAttribute(key);
             }
-            dom[key] = props[key];
+        }
+    });
+
+    Object.keys(nextProps).forEach((key) => {
+        if (key !== "children") {
+            if (nextProps[key] !== prevProps[key]) {
+                if (key.startsWith("on")) {
+                    const eventType = key.slice(2).toLowerCase();
+                    dom.removeEventListener(eventType, prevProps[key]);
+                    dom.addEventListener(eventType, nextProps[key]);
+                } else {
+                    dom[key] = nextProps[key];
+                }
+            }
         }
     });
 }
 
 function initChildren(fiber, children) {
+    let oldFiber = fiber.alternate?.child;
     let prevChild = null;
     children.forEach((child, index) => {
-        const newFiber = {
-            type: child.type,
-            props: child.props,
-            child: null,
-            parent: fiber,
-            sibling: null,
-            dom: null,
+        const isSameType = oldFiber && oldFiber.type === child.type;
+        let newFiber;
+        if (isSameType) {
+            newFiber = {
+                type: child.type,
+                props: child.props,
+                child: null,
+                parent: fiber,
+                sibling: null,
+                dom: oldFiber.dom,
+                effectTag: "update",
+                alternate: oldFiber,
+            };
+        } else {
+            newFiber = {
+                type: child.type,
+                props: child.props,
+                child: null,
+                parent: fiber,
+                sibling: null,
+                dom: null,
+                effectTag: "placement",
+            };
         }
+
+        if (oldFiber) {
+            oldFiber = oldFiber.sibling;
+        }
+
         if (index === 0) {
             fiber.child = newFiber;
         } else {
@@ -122,7 +159,7 @@ function updateHostComponent(fiber) {
 
         // fiber.parent.dom.append(dom);
 
-        updateProps(dom, fiber.props);
+        updateProps(dom, fiber.props, {});
     }
 
     const children = fiber.props.children;
@@ -130,6 +167,7 @@ function updateHostComponent(fiber) {
 }
 
 function performWorkOfUnit(fiber) {
+    console.log(fiber);
     const isFunctionComponent = typeof fiber.type === "function";
     if (isFunctionComponent) {
         updateFunctionComponent(fiber);
@@ -152,9 +190,15 @@ function performWorkOfUnit(fiber) {
 
 requestIdleCallback(workLoop);
 
+function update() {
+    nextWorkOfUnit = root;
+    requestIdleCallback(workLoop);
+}
+
 const React = {
     render,
     createElement,
+    update,
 };
 
 export default React;
