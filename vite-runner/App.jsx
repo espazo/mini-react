@@ -19,15 +19,17 @@ function TestUpdateProps() {
 }
 
 let showBar = false;
-
 function Counter() {
-    function Foo() {
-        return <div>foo</div>;
-    }
 
-    function Bar() {
-        return <p>bar</p>;
-    }
+    const foo = <div>
+        foo
+        <div>child 1</div>
+        <div>child 2</div>
+    </div>;
+
+    const bar = <div>
+        bar
+    </div>;
 
     function handleShowBar() {
         showBar = !showBar;
@@ -37,7 +39,7 @@ function Counter() {
     return (
         <div>
             Counter
-            <div>{showBar ? <Foo/> : <Bar/>}</div>
+            <div>{showBar ? foo : bar}</div>
             <button onClick={handleShowBar}>showBar</button>
         </div>
     );
@@ -50,7 +52,5 @@ function CounterContainer() {
 function App() {
     return <Counter/>;
 }
-
-console.log(App);
 
 export default Counter;

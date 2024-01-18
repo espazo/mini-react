@@ -166,6 +166,11 @@ function reconcileChildren(fiber, children) {
         }
         prevChild = newFiber;
     });
+
+    while (oldFiber) {
+        deletions.push(oldFiber);
+        oldFiber = oldFiber.sibling;
+    }
 }
 
 function updateFunctionComponent(fiber) {
@@ -187,7 +192,6 @@ function updateHostComponent(fiber) {
 }
 
 function performWorkOfUnit(fiber) {
-    console.log(fiber);
     const isFunctionComponent = typeof fiber.type === "function";
     if (isFunctionComponent) {
         updateFunctionComponent(fiber);
