@@ -140,15 +140,17 @@ function reconcileChildren(fiber, children) {
                 alternate: oldFiber,
             };
         } else {
-            newFiber = {
-                type: child.type,
-                props: child.props,
-                child: null,
-                parent: fiber,
-                sibling: null,
-                dom: null,
-                effectTag: "placement",
-            };
+            if (child) {
+                newFiber = {
+                    type: child.type,
+                    props: child.props,
+                    child: null,
+                    parent: fiber,
+                    sibling: null,
+                    dom: null,
+                    effectTag: "placement",
+                };
+            }
 
             if (oldFiber) {
                 deletions.push(oldFiber);
@@ -164,7 +166,9 @@ function reconcileChildren(fiber, children) {
         } else {
             prevChild.sibling = newFiber;
         }
-        prevChild = newFiber;
+        if (newFiber) {
+            prevChild = newFiber;
+        }
     });
 
     while (oldFiber) {
