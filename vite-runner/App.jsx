@@ -1,50 +1,59 @@
 import React from "./core/React.js";
 
-let count = 0;
-let props = {id: "a1234"};
+const log = console.log;
 
-function TestUpdateProps() {
+
+let countFoo = 0;
+
+function Foo() {
+    log("render Foo()");
+    const update = React.update();
 
     function handleClick() {
-        console.log("click");
-        count += 1;
-        props = {style: "color: red;"};
-        React.update();
+        countFoo += 1;
+        update();
     }
 
-    return <div {...props}>
-        Counter: {count}
-        <button onClick={handleClick}>click</button>
+    return <div>
+        foo count: {countFoo}
+        <button onClick={handleClick}>click foo</button>
     </div>;
 }
 
-let showBar = false;
+let countBar = 0;
 
-function Counter() {
-    const bar = <div>bar</div>;
+function Bar() {
+    log("render Bar()");
+    const update = React.update();
 
-    function handleShowBar() {
-        showBar = !showBar;
-        React.update();
+    function handleClick() {
+        countBar += 1;
+        update();
     }
 
-    return (
-        <div>
-            Counter
-            {showBar && bar}
-            <button onClick={handleShowBar}>showBar</button>
-        </div>
-    );
+    return <div>
+        bar count: {countBar}
+        <button onClick={handleClick}>click bar</button>
+    </div>;
 }
 
-function CounterContainer() {
-    return <Counter/>;
-}
+let countRoot = 0;
 
 function App() {
-    return <Counter/>;
+    log("render App()");
+    const update = React.update();
+
+    function handleClick() {
+        countRoot += 1;
+        update();
+    }
+
+    return <div>
+        app count: {countRoot}
+        <button onClick={handleClick}>click app</button>
+        <Foo/>
+        <Bar/>
+    </div>;
 }
 
-console.log(Counter.toString());
-
-export default Counter;
+export default App;

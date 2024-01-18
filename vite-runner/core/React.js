@@ -1,23 +1,17 @@
 function createTextNode(text) {
     return {
-        type: "TEXT_ELEMENT",
-        props: {
-            nodeValue: text,
-            children: [],
+        type: "TEXT_ELEMENT", props: {
+            nodeValue: text, children: [],
         },
     };
 }
 
 function createElement(type, props, ...children) {
     return {
-        type,
-        props: {
-            ...props,
-            children: children.map((child) => {
+        type, props: {
+            ...props, children: children.map((child) => {
                 const isTextNode = typeof child === "string" || typeof child === "number";
-                return isTextNode
-                    ? createTextNode(child)
-                    : child;
+                return isTextNode ? createTextNode(child) : child;
             }),
         },
     }
@@ -25,8 +19,7 @@ function createElement(type, props, ...children) {
 
 function render(el, container) {
     wipRoot = {
-        dom: container,
-        props: {
+        dom: container, props: {
             children: [el],
         },
     };
@@ -42,6 +35,9 @@ function workLoop(deadline) {
     let shouldYield = false;
     while (!shouldYield && nextWorkOfUnit) {
         nextWorkOfUnit = performWorkOfUnit(nextWorkOfUnit);
+        if (wipRoot?.sibling?.type === nextWorkOfUnit?.type ) {
+            nextWorkOfUnit = null;
+        }
         shouldYield = deadline.timeRemaining() < 1;
     }
 
@@ -93,9 +89,7 @@ function commitDeletion(fiber) {
 }
 
 function createDom(type) {
-    return type === "TEXT_ELEMENT"
-        ? document.createTextNode("")
-        : document.createElement(type);
+    return type === "TEXT_ELEMENT" ? document.createTextNode("") : document.createElement(type);
 }
 
 function updateProps(dom, nextProps, prevProps) {
@@ -177,7 +171,10 @@ function reconcileChildren(fiber, children) {
     }
 }
 
+let wipFiber = null;
+
 function updateFunctionComponent(fiber) {
+    wipFiber = fiber;
     const children = [fiber.type(fiber.props)];
     reconcileChildren(fiber, children);
 }
@@ -219,14 +216,20 @@ function performWorkOfUnit(fiber) {
 requestIdleCallback(workLoop);
 
 function update() {
-    nextWorkOfUnit = wipRoot;
-    requestIdleCallback(workLoop);
+    const currentFiber = wipFiber;
+
+    return () => {
+        wipRoot = {
+            ...currentFiber,
+            alternate: currentFiber,
+        };
+        nextWorkOfUnit = wipRoot;
+        requestIdleCallback(workLoop);
+    }
 }
 
 const React = {
-    render,
-    createElement,
-    update,
+    render, createElement, update,
 };
 
 export default React;
