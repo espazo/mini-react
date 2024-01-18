@@ -3,7 +3,7 @@ import React from "./core/React.js";
 let count = 0;
 let props = {id: "a1234"};
 
-function Counter({num}) {
+function TestUpdateProps() {
 
     function handleClick() {
         console.log("click");
@@ -18,14 +18,39 @@ function Counter({num}) {
     </div>;
 }
 
+let showBar = false;
+
+function Counter() {
+    function Foo() {
+        return <div>foo</div>;
+    }
+
+    function Bar() {
+        return <p>bar</p>;
+    }
+
+    function handleShowBar() {
+        showBar = !showBar;
+        React.update();
+    }
+
+    return (
+        <div>
+            Counter
+            <div>{showBar ? <Foo/> : <Bar/>}</div>
+            <button onClick={handleShowBar}>showBar</button>
+        </div>
+    );
+}
+
 function CounterContainer() {
     return <Counter/>;
 }
 
 function App() {
-    return <Counter num={20}/>;
+    return <Counter/>;
 }
 
 console.log(App);
 
-export default App;
+export default Counter;

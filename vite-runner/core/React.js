@@ -35,6 +35,7 @@ function render(el, container) {
 }
 
 let wipRoot = null;
+const deletions = [];
 let nextWorkOfUnit = null;
 
 function workLoop(deadline) {
@@ -73,7 +74,22 @@ function commitUI() {
         recursion(task.sibling);
     }
 
+    deletions.forEach(commitDeletion);
+    deletions.length = 0;
+
     recursion(wipRoot.child);
+}
+
+function commitDeletion(fiber) {
+    if (fiber.dom) {
+        let fiberParent = fiber.parent;
+        while (!fiberParent.dom) {
+            fiberParent = fiberParent.parent;
+        }
+        fiberParent.dom.removeChild(fiber.dom);
+    } else {
+        commitDeletion(fiber.child);
+    }
 }
 
 function createDom(type) {
@@ -133,6 +149,10 @@ function reconcileChildren(fiber, children) {
                 dom: null,
                 effectTag: "placement",
             };
+
+            if (oldFiber) {
+                deletions.push(oldFiber);
+            }
         }
 
         if (oldFiber) {
