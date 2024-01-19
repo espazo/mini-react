@@ -238,7 +238,14 @@ function useState(initial) {
     const oldHost = currentFiber.alternate?.stateHooks[stateHookIndex];
     const stateHook = {
         state: oldHost ? oldHost.state : initial,
+        queue: oldHost ? oldHost.queue : [],
     };
+
+    stateHook.queue.forEach((action) => {
+        stateHook.state = action(stateHook.state);
+    });
+
+    stateHook.queue = [];
 
     stateHookIndex += 1;
     stateHooks.push(stateHook);
@@ -247,7 +254,8 @@ function useState(initial) {
     currentFiber.stateHooks = stateHooks;
 
     function setState(action) {
-        stateHook.state = action(stateHook.state);
+        // stateHook.state = action(stateHook.state);
+        stateHook.queue.push(typeof action === "function" ? action : () => action);
         wipRoot = {
             ...currentFiber,
             alternate: currentFiber,
