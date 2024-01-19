@@ -35,7 +35,7 @@ function workLoop(deadline) {
     let shouldYield = false;
     while (!shouldYield && nextWorkOfUnit) {
         nextWorkOfUnit = performWorkOfUnit(nextWorkOfUnit);
-        if (wipRoot?.sibling?.type === nextWorkOfUnit?.type ) {
+        if (wipRoot?.sibling?.type === nextWorkOfUnit?.type) {
             nextWorkOfUnit = null;
         }
         shouldYield = deadline.timeRemaining() < 1;
@@ -174,7 +174,10 @@ function reconcileChildren(fiber, children) {
 let wipFiber = null;
 
 function updateFunctionComponent(fiber) {
+    stateHooks = [];
+    stateHookIndex = 0;
     wipFiber = fiber;
+
     const children = [fiber.type(fiber.props)];
     reconcileChildren(fiber, children);
 }
@@ -220,16 +223,45 @@ function update() {
 
     return () => {
         wipRoot = {
-            ...currentFiber,
-            alternate: currentFiber,
+            ...currentFiber, alternate: currentFiber,
         };
         nextWorkOfUnit = wipRoot;
         requestIdleCallback(workLoop);
     }
 }
 
+let stateHooks;
+let stateHookIndex;
+
+function useState(initial) {
+    let currentFiber = wipFiber;
+    const oldHost = currentFiber.alternate?.stateHooks[stateHookIndex];
+    const stateHook = {
+        state: oldHost ? oldHost.state : initial,
+    };
+
+    stateHookIndex += 1;
+    stateHooks.push(stateHook);
+    console.log(stateHookIndex, stateHooks);
+
+    currentFiber.stateHooks = stateHooks;
+
+    function setState(action) {
+        stateHook.state = action(stateHook.state);
+        wipRoot = {
+            ...currentFiber,
+            alternate: currentFiber,
+        }
+
+        nextWorkOfUnit = wipRoot;
+        requestIdleCallback(workLoop);
+    }
+
+    return [stateHook.state, setState];
+}
+
 const React = {
-    render, createElement, update,
+    render, createElement, update, useState,
 };
 
 export default React;
