@@ -11,7 +11,7 @@ function Foo() {
     const [x, setX] = React.useState(2);
 
     function handleClick() {
-        setCount(count + 1);
+        setCount(count);
     }
 
     function handleAddTwo() {

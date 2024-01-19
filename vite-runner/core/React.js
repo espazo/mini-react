@@ -249,12 +249,15 @@ function useState(initial) {
 
     stateHookIndex += 1;
     stateHooks.push(stateHook);
-    console.log(stateHookIndex, stateHooks);
 
     currentFiber.stateHooks = stateHooks;
 
     function setState(action) {
-        // stateHook.state = action(stateHook.state);
+        const eagerState = typeof action === "function" ? action(stateHook.state) : action;
+        if (eagerState === stateHook.state) {
+            return;
+        }
+
         stateHook.queue.push(typeof action === "function" ? action : () => action);
         wipRoot = {
             ...currentFiber,
